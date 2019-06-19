@@ -64,7 +64,7 @@ def likelihood(c, data, draws, verbose=False):
     return res
 
 
-def mixedlogit(data, drawtype, n_draws, true_c, c_0=False, method='BFGS', verbose=0):
+def mixedlogit(data, drawtype, n_draws, true_c, dgp, dgp_i, dgp_n, c_0=False, method='BFGS', verbose=0):
         n_q = len(data.id.unique())
 
     #     coefficients = [#alpha heinz41
@@ -117,11 +117,21 @@ def mixedlogit(data, drawtype, n_draws, true_c, c_0=False, method='BFGS', verbos
         duration = end-start 
         
         res['duration'] = duration
+        res['drawtype'] = drawtype
+        res['n_draws'] = n_draws
+        res['true_c'] = true_c
+        res['c_0'] = c_0
+        res['method'] = method
+        res['dgp'] = dgp
+        res['dgp_i'] = dgp_i
+        res['dgp_n'] = dgp_n
+        
         res['x'][6:] = np.exp(res['x'][6:])
         if verbose > 0: 
             print("Optimization done, time elapsed: %s" % str(datetime.timedelta(seconds=round(duration))))
             display(res)
             print('\n')
-
+        
         res['iterations'] = iterations
+        
         return res
