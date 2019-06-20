@@ -5,22 +5,11 @@ import os
 import pickle
 import time
 import numpy as np
+from os import listdir
+from os.path import isfile, join
 
 def datasetloader(dataset):
     return pickle.load(open("datasets/"+dataset,"rb"))
-
-def resultsloader(picklelist):
-    results = []
-    
-    for file in picklelist:
-        with open("Results/"+file, "rb") as f:
-            while True:
-                try:
-                    results.append(pickle.load(f))
-                except EOFError:
-                    break
-    
-    return results
 
 class Mixedlogit:
         def __init__(self, dataset, dgp_name):
@@ -72,5 +61,16 @@ class Mixedlogit:
                 pickle_out.close()
                 print("All results saved to pickle: "+filename)
             
-           
-            
+class Analyzer:
+    def __init__(self, folder):
+        picklelist = [f for f in listdir(folder) if isfile(join(folder, f))]
+        results = []
+        for file in picklelist:
+            with open(folder+"/"+file, "rb") as f:
+                while True:
+                    try:
+                        results.append(pickle.load(f))
+                    except EOFError:
+                        break
+
+        self.data = results
