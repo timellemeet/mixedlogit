@@ -4,6 +4,7 @@ from pathvalidate import sanitize_filename
 import os
 import pickle
 import time
+import numpy as np
 
 def datasetloader(dataset):
     return pickle.load(open("datasets/"+dataset,"rb"))
@@ -38,10 +39,20 @@ class Mixedlogit:
             print("Fitting %d datasets \n" % n_runs)
             
             if save != False:
-                os.makedirs("Results", exist_ok=True)
+                
                 timestamp = time.strftime("%Y-%m-%d-%H%M%S")
-                filename = "Results/"+sanitize_filename(save
-                                                        +" - dgp "+self.dgp
+                path = []
+                for s in save.split('/'):
+                    path.append(sanitize_filename(s))
+                path = '/'.join(path)
+                
+                dirs = ["Results"]
+                if(len(path.split('/')) > 1):
+                        dirs = np.concatenate((dirs,path.split('/')[:-1]))
+                        
+                os.makedirs('/'.join(dirs), exist_ok=True)
+                
+                filename = "Results/"+path+sanitize_filename(" - dgp "+self.dgp
                                                         +"- start "+str(start)+" end "+str(end-1)
                                                         +" - drawtype "+drawtype
                                                         + " - ndraws "+str(n_draws)

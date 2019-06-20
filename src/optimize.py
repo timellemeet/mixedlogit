@@ -59,7 +59,7 @@ def likelihood(c, data, draws, verbose=False):
     
     res = -np.log(estimates).sum()
     
-    if verbose == 2: print(res)
+    if verbose == 3: print(res)
         
     return res
 
@@ -105,7 +105,9 @@ def mixedlogit(data, drawtype, n_draws, true_c, dgp, dgp_i, dgp_n, c_0=False, me
                                      
                 #loggint output
                 iterations.loc[len(iterations)] = np.concatenate((c_i, mape, rmse), axis=None)
-                display(iterations.tail(1))
+                
+                if(verbose >1):
+                    display(iterations.tail(1))
                
 
         start = time.time()
@@ -125,8 +127,11 @@ def mixedlogit(data, drawtype, n_draws, true_c, dgp, dgp_i, dgp_n, c_0=False, me
         res['dgp'] = dgp
         res['dgp_i'] = dgp_i
         res['dgp_n'] = dgp_n
-        
         res['x'][6:] = np.exp(res['x'][6:])
+        
+        res['rmse'] = sqrt(mean_squared_error(true_c, res['x']))
+        res['mape'] = mean_absolute_percentage_error(true_c, res['x'])
+        
         if verbose > 0: 
             print("Optimization done, time elapsed: %s" % str(datetime.timedelta(seconds=round(duration))))
             display(res)
