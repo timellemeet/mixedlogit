@@ -64,7 +64,7 @@ def likelihood(c, data, draws, verbose=False):
     return res
 
 
-def mixedlogit(data, drawtype, n_draws, true_c, dgp, dgp_i, dgp_n, c_0=False, method='BFGS', verbose=0):
+def mixedlogit(data, drawtype, n_draws, c_true, dgp, dgp_i, dgp_n, c_0=False, method='BFGS', verbose=0):
         n_q = len(data.id.unique())
 
     #     coefficients = [#alpha heinz41
@@ -100,8 +100,8 @@ def mixedlogit(data, drawtype, n_draws, true_c, dgp, dgp_i, dgp_n, c_0=False, me
                 #calulating values
                 sigma = np.exp(xk[6:])
                 c_i = np.concatenate((xk[:6], sigma))
-                rmse = sqrt(mean_squared_error(true_c, c_i))
-                mape = mean_absolute_percentage_error(true_c, c_i)
+                rmse = sqrt(mean_squared_error(c_true, c_i))
+                mape = mean_absolute_percentage_error(c_true, c_i)
                                      
                 #loggint output
                 iterations.loc[len(iterations)] = np.concatenate((c_i, mape, rmse), axis=None)
@@ -121,22 +121,24 @@ def mixedlogit(data, drawtype, n_draws, true_c, dgp, dgp_i, dgp_n, c_0=False, me
         res['duration'] = duration
         res['drawtype'] = drawtype
         res['n_draws'] = n_draws
-        res['true_c'] = true_c
+        res['c_true'] = c_true
         res['c_0'] = c_0
         res['method'] = method
         res['dgp'] = dgp
         res['dgp_i'] = dgp_i
         res['dgp_n'] = dgp_n
         res['x'][6:] = np.exp(res['x'][6:])
+        res['c_hat'] = res['x']
         
-        res['rmse'] = sqrt(mean_squared_error(true_c, res['x']))
-        res['mape'] = mean_absolute_percentage_error(true_c, res['x'])
+        res['rmse'] = sqrt(mean_squared_error(c_true, res['c_hat']))
+        res['mape'] = mean_absolute_percentage_error(c_true, res['c_hat'])
         
         if verbose > 0: 
             print("Optimization done, time elapsed: %s" % str(datetime.timedelta(seconds=round(duration))))
             display(res)
             print('\n')
         
+        del res['x']
         res['iterations'] = iterations
         
         return res

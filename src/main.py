@@ -5,8 +5,10 @@ import os
 import pickle
 import time
 import numpy as np
+import pandas as pd
 from os import listdir
 from os.path import isfile, join
+
 
 def datasetloader(dataset):
     return pickle.load(open("datasets/"+dataset,"rb"))
@@ -51,7 +53,7 @@ class Mixedlogit:
 
             for i in range(n_runs):
                 print("Fitting model %d of %d \n" % ((i+1), n_runs))
-                self.result[i] = mixedlogit(self.data[i], drawtype, n_draws, true_c = self.coefficients, dgp= self.dgp, dgp_i = (start+i), dgp_n=len(self.data), verbose = verbose)
+                self.result[i] = mixedlogit(self.data[i], drawtype, n_draws, c_true = self.coefficients, dgp= self.dgp, dgp_i = (start+i), dgp_n=len(self.data), verbose = verbose)
     
                 if save != False:
                     print("Saving run %d of %d \n" % ((i+1), n_runs))
@@ -62,15 +64,25 @@ class Mixedlogit:
                 print("All results saved to pickle: "+filename)
             
 class Analyzer:
-    def __init__(self, folder):
-        picklelist = [f for f in listdir(folder) if isfile(join(folder, f))]
+    def __init__(self, folders):
         results = []
-        for file in picklelist:
-            with open(folder+"/"+file, "rb") as f:
-                while True:
-                    try:
-                        results.append(pickle.load(f))
-                    except EOFError:
-                        break
+        
+        for folder in folders:
+            picklelist = [f for f in listdir(folder) if isfile(join(folder, f))]
+
+            for file in picklelist:
+                with open(folder+"/"+file, "rb") as f:
+                    while True:
+                        try:
+                            res = pickle.load(f)
+                            res['folder'] = folder
+                            res['file'] = file
+                            results.append(res)
+                        except EOFError:
+                            break
 
         self.data = results
+        
+        
+        self.df = pd.DataFrame(self.data)
+        
