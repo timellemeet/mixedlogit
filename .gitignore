@@ -1,3 +1,4 @@
 .idea/
 .ipynb_checkpoints/
 datasets/n 1000 - seed 1234 - time 2019-06-19-154935.pickle
+src/__pycache__
