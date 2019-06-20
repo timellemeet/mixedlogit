@@ -110,9 +110,14 @@ class Analyzer:
                     while True:
                         try:
                             res = pickle.load(f)
-#                             res['folder'] = folder
-#                             res['file'] = file
-                            results.append(res)
+                            
+                            if isinstance(res, bool):
+                                print("Bad result found, is a boolean of value: ")
+                                print(res)
+                            else:
+                                res['folder'] = folder
+                                res['file'] = file
+                                results.append(res)
                         except EOFError:
                             break
 
