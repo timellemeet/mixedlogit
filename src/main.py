@@ -8,6 +8,8 @@ import numpy as np
 import pandas as pd
 from os import listdir
 from os.path import isfile, join
+from joblib import Parallel, delayed
+import datetime
 
 
 def datasetloader(dataset):
@@ -23,7 +25,7 @@ class Mixedlogit:
             self.dgp = dgp_name
             self.result = {}
             
-        def fit(self, drawtype, n_draws, start=0, end=0, c_0=False, save=False, method='BFGS', verbose=0):
+        def fit(self, drawtype, n_draws, start=0, end=0, c_0=False, save=False, method='BFGS', verbose=0, parallel=False):
             if end == 0:
                 end = len(self.data)
             n_runs = end - start 
@@ -49,23 +51,56 @@ class Mixedlogit:
                                                         + " - ndraws "+str(n_draws)
                                                         +"- timestamp "+timestamp)
                 
-                pickle_out = open(filename+".pickle","wb")
-
-            for i in range(n_runs):
-                print("Fitting model %d of %d \n" % ((i+1), n_runs))
-                self.result[i] = mixedlogit(self.data[i], drawtype, n_draws, c_true = self.coefficients, dgp= self.dgp, dgp_i = (start+i), dgp_n=len(self.data), verbose = verbose)
-    
-                if save != False:
-                    print("Saving run %d of %d \n" % ((i+1), n_runs))
-                    pickle.dump(self.result[i], pickle_out)
                 
-            if save != False:
-                pickle_out.close()
-                print("All results saved to pickle: "+filename)
+
             
+            #execture code in single thread
+            if parallel == False:
+                if save != False: pickle_out = open(filename+".pickle","wb")
+                    
+                for i in range(n_runs):
+                    print("Fitting model %d of %d \n" % ((i+1), n_runs))
+                    self.result[i] = mixedlogit(self.data[start+i], drawtype, n_draws, c_true = self.coefficients, dgp= self.dgp, dgp_i = (start+i), dgp_n=len(self.data), verbose = verbose)
+
+                    if save != False:
+                        print("Saving run %d of %d \n" % ((i+1), n_runs))
+                        pickle.dump(self.result[i], pickle_out)
+
+                if save != False:
+                    pickle_out.close()
+                    print("All results saved to pickle: "+filename)
+                    
+            #execute code in parallel
+            else:
+                print("Executing code in parallel \n")
+                def mxl(i):
+                    try:
+                        return mixedlogit(self.data[start+i], drawtype, n_draws, c_true = self.coefficients, dgp=self.dgp, dgp_i = (start+i), dgp_n=len(self.data), verbose = verbose)
+                    except:
+                        return False
+                
+                starttime = time.time()
+                self.result = Parallel(n_jobs=-1, verbose=10)(delayed(mxl)(i) for i in range(n_runs))
+                endtime = time.time()
+                
+                duration = str(datetime.timedelta(seconds=round(endtime-starttime)))
+                avg = str(datetime.timedelta(seconds=round((endtime-starttime)/n_runs))) 
+                print("Finished parallel excuting of %d jobs in %s, time per job %s\n" % (n_runs, duration, avg))
+                
+                if save != False:
+                    print("Initializing save")
+                    pickle_out = open(filename+".pickle","wb")
+                    for i in range(n_runs):
+                        if verbose > 2: print("Saving run %d of %d \n" % ((i+1), n_runs))
+                        pickle.dump(self.result[i], pickle_out)
+                    pickle_out.close()
+                    print("All results saved to pickle: "+filename)
+                
 class Analyzer:
     def __init__(self, folders):
         results = []
+        
+        if isinstance(folders, str): folders = [folders]
         
         for folder in folders:
             picklelist = [f for f in listdir(folder) if isfile(join(folder, f))]
@@ -75,8 +110,8 @@ class Analyzer:
                     while True:
                         try:
                             res = pickle.load(f)
-                            res['folder'] = folder
-                            res['file'] = file
+#                             res['folder'] = folder
+#                             res['file'] = file
                             results.append(res)
                         except EOFError:
                             break
