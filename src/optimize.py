@@ -8,6 +8,7 @@ from IPython.display import display
 from sklearn.metrics import mean_squared_error
 from math import sqrt
 pd.options.display.float_format = '{:,.3f}'.format
+from src.draws import makedraws
 
 def mean_absolute_percentage_error(y_true, y_pred): 
     y_true, y_pred = np.array(y_true), np.array(y_pred)
@@ -84,14 +85,9 @@ def mixedlogit(data, drawtype, n_draws, c_true, dgp, dgp_i, dgp_n, c_0=False, me
                 c_0 = np.random.rand(9)
         elif len(c_0) != 9:
             raise Exception("Incorrect initial coefficients")
-
+        
         #generate draws
-        if drawtype == 'pseudo':
-            draws = np.random.randn(n_draws, n_q, 3); 
-        else:
-             raise Exception("Incorrect Drawtype: "+drawtype)
-
-
+        draws = makedraws(drawtype, n_draws, n_q, 3)
         
         iterations = pd.DataFrame(columns=['a h41', 'a h32', 'a h28', 'm disp', 'm feat', 'm price', 's disp', 's feat', 's price', 'MAPE', 'RMSE'])
         
