@@ -87,7 +87,7 @@ def mixedlogit(data, drawtype, n_draws, c_true, dgp, dgp_i, dgp_n, c_0=False, me
             raise Exception("Incorrect initial coefficients")
         
         #generate draws
-        draws = makedraws(drawtype, n_draws, n_q, 3)
+        draws = makedraws(drawtype, n_draws, n_q, 3, verbose)
         
         iterations = pd.DataFrame(columns=['a h41', 'a h32', 'a h28', 'm disp', 'm feat', 'm price', 's disp', 's feat', 's price', 'MAPE', 'RMSE'])
         

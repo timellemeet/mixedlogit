@@ -99,7 +99,7 @@ class Mixedlogit:
 class Analyzer:
     def __init__(self, folders):
         results = []
-        
+        badresults = 0;
         if isinstance(folders, str): folders = [folders]
         
         for folder in folders:
@@ -112,15 +112,18 @@ class Analyzer:
                             res = pickle.load(f)
                             
                             if isinstance(res, bool):
-                                print("Bad result found, is a boolean of value: ")
-                                print(res)
+                                badresults += 1
+#                                 print("Bad result found, is a boolean of value: ")
+#                                 print(res)
                             else:
                                 res['folder'] = folder
                                 res['file'] = file
                                 results.append(res)
                         except EOFError:
                             break
-
+        
+        print("number of failed results is %d of %d"  % (badresults, len(results)))
+        
         self.data = results
         
         
