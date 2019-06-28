@@ -1,8 +1,24 @@
 import numpy as np
 from scipy.stats import norm
 import ghalton
+import sobol_seq
+
+
 
 def makedraws(drawtype, n_r, n_q, n_k, verbose):
+        #define a function to transform made draws in to appropriate standard normals
+        def transform(madedraws):
+            #make the result array
+            draws = np.zeros((n_r, n_q, n_k))
+
+            #assign the right probablilities
+            for q in range(n_q):
+                 for r in range(n_r):
+                    draws[r, q, :] = madedraws[n_r * q + r,:] 
+            
+            #convert to standard variates
+            return norm.ppf(draws)
+            
         print("Making %s draws of shape (%d, %d, %d)" % (drawtype, n_r, n_q, n_k))
         #generate draws
         if drawtype == 'pseudo':
@@ -14,17 +30,8 @@ def makedraws(drawtype, n_r, n_q, n_k, verbose):
             #make the draws and discard the 10 inital values to prevent issues
             halton = np.array(sequencer.get(n_q * n_r + 10)[10:])
 
-            #make the result array
-            draws = np.zeros((n_r, n_q, n_k))
-
-            #assign the right probablilities
-            for q in range(n_q):
-                for r in range(n_r):
-                    draws[r, q, :] = halton[n_r * q + r,:]
-
-            #convert to standard variates
-            draws = norm.ppf(draws)
-            
+            return transform(halton)
+        
         elif drawtype == 'golden':
              #generalized definition of the golden ration
             def r2draws(n, d, seed=0.5): 
@@ -46,18 +53,14 @@ def makedraws(drawtype, n_r, n_q, n_k, verbose):
                 return r2draws
 
             #make the draws and discard the 10 inital values to prevent issues
-            goldenr2 = np.array(r2draws(n_q * n_r, n_k))
+            goldenr2 = np.array(r2draws(n_q * n_r+10, n_k))[10:]
 
-            #make the result array
-            draws = np.zeros((n_r, n_q, n_k))
-
-            #assign the right probablilities
-            for q in range(n_q):
-                 for r in range(n_r):
-                    draws[r, q, :] = goldenr2[n_r * q + r,:] 
+            return transform(goldenr2)
             
-            #convert to standard variates
-            draws = norm.ppf(draws)
+        elif drawtype == 'sobol':
+            sobol = sobol_seq.i4_sobol_generate(n_k, n_r*n_q+10)[10:]
+            
+            return transform(sobol)
             
         else:
             raise Exception("Incorrect Drawtype: "+drawtype)    
