@@ -25,6 +25,40 @@ def makedraws(drawtype, n_r, n_q, n_k, verbose):
             #convert to standard variates
             draws = norm.ppf(draws)
             
+        elif drawtype == 'golden':
+             #generalized definition of the golden ration
+            def r2draws(n, d, seed=0.5): 
+                def phi(d): 
+                    x=2
+                    for i in range(100): 
+                        x = pow(1+x,1/(d+1)) 
+                    return x
+
+                g = phi(d) 
+                alpha = np.zeros(d) 
+                for j in range(d): 
+                    alpha[j] = pow(1/g,j+1)  %1 # mod 1 
+
+                r2draws = np.zeros((n, d))
+                for i in range(n): 
+                      r2draws[i] = (seed + alpha*(i+1)) % 1 # mod 1 
+
+                return r2draws
+
+            #make the draws and discard the 10 inital values to prevent issues
+            goldenr2 = np.array(r2draws(n_q * n_r, n_k))
+
+            #make the result array
+            draws = np.zeros((n_r, n_q, n_k))
+
+            #assign the right probablilities
+            for q in range(n_q):
+                 for r in range(n_r):
+                    draws[r, q, :] = goldenr2[n_r * q + r,:] 
+            
+            #convert to standard variates
+            draws = norm.ppf(draws)
+            
         else:
             raise Exception("Incorrect Drawtype: "+drawtype)    
             
